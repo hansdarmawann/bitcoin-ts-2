@@ -1,0 +1,12 @@
+---
+title: "Bitcoin Monthly Time Series Forecasting"
+output: html_document
+---
+
+```{r setup, message=FALSE}
+library(tidyverse)
+```
+
+## Overview
+
+TODO: Project overview and objectives.
