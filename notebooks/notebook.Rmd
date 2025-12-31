@@ -1,3 +1,7 @@
+---
+---
+---
+
 # Daily Bitcoin Time Series Analysis (2014–2025)
 
 by Hans Darmawan
