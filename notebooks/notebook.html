@@ -358,6 +358,23 @@ display: none;
 <hr />
 <div id="setup-libraries" class="section level2">
 <h2>1. Setup &amp; Libraries</h2>
+<p>This section initializes all required R packages for time series
+analysis, data manipulation, and visualization.</p>
+<ul>
+<li><strong>tidyverse</strong> is used for data wrangling and
+plotting.</li>
+<li><strong>tsibble</strong> provides a tidy framework for handling
+temporal data with explicit time indices.</li>
+<li><strong>lubridate</strong> simplifies date manipulation.</li>
+<li><strong>slider</strong> enables rolling-window calculations such as
+moving averages and rolling volatility.</li>
+<li><strong>fable</strong> supplies modern forecasting models (e.g.,
+Naive, Random Walk, ARIMA).</li>
+<li><strong>here</strong> ensures robust and reproducible relative file
+paths across environments.</li>
+</ul>
+<p>Loading libraries at the beginning guarantees reproducibility and
+avoids namespace conflicts later in the analysis.</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
 <pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
 ## ✔ dplyr     1.1.4     ✔ readr     2.1.6
@@ -393,6 +410,16 @@ library(fable)</code></pre>
 </div>
 <div id="load-daily-bitcoin-data" class="section level2">
 <h2>2. Load Daily Bitcoin Data</h2>
+<p>This section loads the daily Bitcoin price dataset from a relative
+file path using the <code>here</code> package.</p>
+<p>Using a relative path improves project portability and ensures the
+analysis runs consistently across different machines and directory
+structures.</p>
+<p>The dataset is expected to contain: - A <code>date</code> column
+representing daily timestamps - A <code>close</code> column representing
+daily closing prices</p>
+<p>Immediately after loading, the total number of observations is
+printed to verify that the data was imported correctly.</p>
 <pre class="r"><code>btc_raw &lt;- read_csv(
   here::here(&quot;data&quot;, &quot;btc_2014_2025.csv&quot;),
   show_col_types = FALSE
@@ -401,7 +428,15 @@ library(fable)</code></pre>
 message(&quot;Rows loaded (daily): &quot;, nrow(btc_raw))</code></pre>
 <pre><code>## Rows loaded (daily): 4121</code></pre>
 <div id="validation" class="section level3">
-<h3>Validation</h3>
+<h3>2.1. Validation</h3>
+<p>Before proceeding with analysis, basic schema validation is
+performed.</p>
+<p>The code checks whether all required columns (<code>date</code>,
+<code>close</code>) exist in the dataset.<br />
+If any required column is missing, the script stops execution with a
+clear error message.</p>
+<p>This defensive programming step prevents silent failures and ensures
+that downstream transformations and models operate on valid inputs.</p>
 <pre class="r"><code>required_cols &lt;- c(&quot;date&quot;, &quot;close&quot;)
 
 missing_cols &lt;- setdiff(required_cols, names(btc_raw))
@@ -416,6 +451,16 @@ paste(missing_cols, collapse = &quot;, &quot;)
 </div>
 <div id="data-cleaning-tsibble-conversion" class="section level2">
 <h2>3. Data Cleaning &amp; Tsibble Conversion</h2>
+<p>In this step, the raw dataset is transformed into a clean, structured
+time series object.</p>
+<p>Key operations include: - Converting <code>date</code> to a proper
+<code>Date</code> class - Casting <code>close</code> prices to numeric
+values - Sorting observations chronologically - Converting the dataset
+into a <code>tsibble</code> using <code>date</code> as the time
+index</p>
+<p>The resulting <code>tsibble</code> explicitly encodes temporal
+structure, enabling time-aware operations such as forecasting, gap
+detection, and rolling statistics.</p>
 <pre class="r"><code>btc_ts &lt;- btc_raw %&gt;%
 mutate(
 date = as.Date(date),
@@ -440,7 +485,16 @@ btc_ts</code></pre>
 ## 10 2014-09-26  411.  415.  400.  404. 21460800
 ## # ℹ 4,111 more rows</code></pre>
 <div id="sanity-checks" class="section level3">
-<h3>Sanity Checks</h3>
+<h3>3.1. Sanity Checks</h3>
+<p>Sanity checks are performed to ensure time series integrity.</p>
+<ul>
+<li><strong>Gap detection</strong> verifies whether any calendar days
+are missing in the daily series.</li>
+<li><strong>Missing value checks</strong> ensure that no <code>NA</code>
+values exist in the closing price column.</li>
+</ul>
+<p>These checks are critical for financial time series, as missing days
+or values can bias rolling statistics and forecasting models.</p>
 <pre class="r"><code>gaps &lt;- has_gaps(btc_ts)
 
 if (nrow(gaps) &gt; 0) {
@@ -460,8 +514,22 @@ warning(&quot;⚠️ Missing values detected in &#39;close&#39;&quot;)
 </div>
 <div id="exploratory-data-analysis-eda" class="section level2">
 <h2>4. Exploratory Data Analysis (EDA)</h2>
+<p>Exploratory Data Analysis (EDA) provides an initial understanding of
+Bitcoin’s price dynamics over time.</p>
+<p>Visual inspection helps identify: - Long-term growth trends -
+Structural breaks - Periods of extreme volatility - Regime shifts
+commonly observed in cryptocurrency markets</p>
+<p>EDA is a crucial step before applying any statistical or forecasting
+models.</p>
 <div id="full-history-price" class="section level3">
-<h3>4.1 Full History Price</h3>
+<h3>4.1. Full History Price</h3>
+<p>This plot visualizes the entire daily Bitcoin price history from 2014
+to 2025.</p>
+<p>It highlights: - The long-term upward trend - High volatility
+relative to traditional assets - Distinct bull and bear market
+cycles</p>
+<p>This global view provides context for subsequent focused analyses on
+shorter time horizons.</p>
 <pre class="r"><code>ggplot(btc_ts, aes(date, close)) +
 geom_line(alpha = 0.6) +
 theme_minimal() +
@@ -474,7 +542,17 @@ y = &quot;Price&quot;
 <hr />
 </div>
 <div id="last-2-years" class="section level3">
-<h3>4.2 Last 2 Years</h3>
+<h3>4.2. Last 2 Years</h3>
+<p>This section zooms into the most recent two years of Bitcoin price
+data.</p>
+<p>Focusing on recent history allows:</p>
+<ul>
+<li><p>- Better inspection of current market behavior</p></li>
+<li><p>- Identification of short-term trends and volatility
+patterns</p></li>
+<li><p>- Alignment with practical forecasting horizons used in trading
+and risk analysis</p></li>
+</ul>
 <pre class="r"><code>btc_recent &lt;- btc_ts %&gt;%
 filter(date &gt;= max(date) - years(2))
 
@@ -490,7 +568,13 @@ y = &quot;Price&quot;
 <hr />
 </div>
 <div id="day-rolling-mean" class="section level3">
-<h3>4.3 30-Day Rolling Mean</h3>
+<h3>4.3. 30-Day Rolling Mean</h3>
+<p>The 30-day rolling mean smooths short-term fluctuations and
+highlights medium-term price trends.</p>
+<p>A rolling window of 30 days is commonly used in financial analysis to
+approximate monthly market behavior.</p>
+<p>Overlaying the rolling mean on the raw price series helps
+distinguish: - Trend movements - Noise-driven daily fluctuations</p>
 <pre class="r"><code>btc_roll &lt;- btc_ts %&gt;%
 mutate(
 close_ma_30 = slide_dbl(
@@ -516,7 +600,13 @@ y = &quot;Price&quot;
 <hr />
 </div>
 <div id="day-rolling-volatility" class="section level3">
-<h3>4.4 30-Day Rolling Volatility</h3>
+<h3>4.4. 30-Day Rolling Volatility</h3>
+<p>This section computes a 30-day rolling standard deviation of Bitcoin
+prices as a proxy for market volatility.</p>
+<p>Rolling volatility reveals: - Volatility clustering - Periods of
+market stress - Calm versus turbulent regimes</p>
+<p>Such patterns are characteristic of financial assets and motivate
+more advanced volatility models in later stages (e.g., GARCH).</p>
 <pre class="r"><code>btc_vol &lt;- btc_ts %&gt;%
 mutate(
 vol_30 = slide_dbl(
@@ -543,8 +633,22 @@ y = &quot;Volatility&quot;
 </div>
 <div id="baseline-forecasting-models" class="section level2">
 <h2>5. Baseline Forecasting Models</h2>
+<p>Baseline models provide reference points against which more complex
+models can be evaluated.</p>
+<p>In financial time series, simple models often perform surprisingly
+well, especially over short forecasting horizons.</p>
+<p>Establishing baselines ensures that additional model complexity is
+justified by real performance gains.</p>
 <div id="traintest-split" class="section level3">
-<h3>5.1 Train–Test Split</h3>
+<h3>5.1. Train–Test Split</h3>
+<p>The dataset is split into training and testing sets using a
+rolling-origin approach.</p>
+<ul>
+<li>The last 14 days are reserved as the test set</li>
+<li>All earlier observations form the training set</li>
+</ul>
+<p>This approach respects the temporal ordering of the data and avoids
+information leakage from the future.</p>
 <pre class="r"><code>horizon &lt;- 14
 
 btc_train &lt;- btc_ts %&gt;%
@@ -560,7 +664,19 @@ message(&quot;Train rows: &quot;, nrow(btc_train))</code></pre>
 <hr />
 </div>
 <div id="model-fitting" class="section level3">
-<h3>5.2 Model Fitting</h3>
+<h3>5.2. Model Fitting</h3>
+<p>Three baseline forecasting models are fitted on the training
+data:</p>
+<ul>
+<li><strong>Naive model</strong> — assumes future prices equal the last
+observed price</li>
+<li><strong>Random Walk with Drift</strong> — allows for a constant
+average price change over time</li>
+<li><strong>ARIMA</strong> — captures autocorrelation and differencing
+structure automatically</li>
+</ul>
+<p>These models represent increasing levels of statistical
+sophistication while remaining interpretable.</p>
 <pre class="r"><code>models &lt;- btc_train %&gt;%
 model(
 naive = NAIVE(close),
@@ -581,7 +697,13 @@ report(models)</code></pre>
 <hr />
 </div>
 <div id="forecasting" class="section level3">
-<h3>5.3 Forecasting</h3>
+<h3>5.3. Forecasting</h3>
+<p>Each fitted model generates forecasts for the 14-day horizon.</p>
+<p>Forecasts are visualized together with historical data to: - Compare
+model behavior - Inspect forecast uncertainty - Assess plausibility of
+predicted trajectories</p>
+<p>Visualization is especially important in financial contexts where
+numerical accuracy alone may be misleading.</p>
 <pre class="r"><code>fc &lt;- models %&gt;%
 forecast(h = horizon)
 
@@ -598,6 +720,15 @@ y = &quot;Price&quot;
 </div>
 <div id="model-evaluation" class="section level2">
 <h2>6. Model Evaluation</h2>
+<p>Forecast accuracy is evaluated using out-of-sample test data.</p>
+<p>Common error metrics include:</p>
+<ul>
+<li><p><strong>MAE (Mean Absolute Error)</strong></p></li>
+<li><p><strong>RMSE (Root Mean Squared Error)</strong></p></li>
+<li><p><strong>MAPE (Mean Absolute Percentage Error)</strong></p></li>
+</ul>
+<p>Evaluating models on unseen data provides an unbiased estimate of
+real-world forecasting performance.</p>
 <pre class="r"><code>acc &lt;- accuracy(fc, btc_test)</code></pre>
 <pre><code>## Warning: The future dataset is incomplete, incomplete out-of-sample data will be treated as missing. 
 ## 1 observation is missing at 2025-12-28</code></pre>
@@ -609,7 +740,16 @@ y = &quot;Price&quot;
 ## 2 drift  Test   990. 1304. 1196.  1.12  1.36   NaN   NaN 0.371
 ## 3 naive  Test  1138. 1430. 1328.  1.29  1.51   NaN   NaN 0.393</code></pre>
 <div id="summary-comparison" class="section level3">
-<h3>Summary Comparison</h3>
+<h3>6.1. Summary Comparison</h3>
+<p>Model performance metrics are summarized and ranked by RMSE.</p>
+<p>This comparison identifies:</p>
+<ul>
+<li><p>The strongest baseline model</p></li>
+<li><p>Whether increased model complexity improves accuracy</p></li>
+<li><p>A benchmark for future, more advanced models</p></li>
+</ul>
+<p>Such summaries are essential for transparent and reproducible model
+selection.</p>
 <pre class="r"><code>acc_summary &lt;- acc %&gt;%
 select(.model, MAE, RMSE, MAPE) %&gt;%
 arrange(RMSE)
@@ -626,26 +766,23 @@ acc_summary</code></pre>
 </div>
 <div id="conclusion" class="section level2">
 <h2>7. Conclusion</h2>
+<p>This analysis successfully models Bitcoin daily prices as a
+structured time series.</p>
+<p>Key outcomes:</p>
 <ul>
-<li><p>Dataset successfully modeled as <strong>daily
-tsibble</strong></p></li>
-<li><p>Baseline models established:</p>
-<ul>
-<li>Naive</li>
-<li>Random Walk with Drift</li>
-<li>ARIMA</li>
-</ul></li>
-<li><p>Evaluation uses <strong>out-of-sample 14-day
-horizon</strong></p></li>
-<li><p>Ready for:</p>
-<ul>
-<li>Log-return modeling</li>
-<li>GARCH / ETS</li>
-<li>Weekly aggregation</li>
-<li>Regime analysis</li>
-</ul></li>
+<li><p>Data validated and converted into a daily tsibble</p></li>
+<li><p>Core price dynamics explored through EDA</p></li>
+<li><p>Baseline forecasting models established and evaluated</p></li>
+<li><p>A robust foundation created for advanced financial time series
+modeling</p></li>
 </ul>
-<hr />
+<p>The analysis is now ready for extensions such as:</p>
+<ul>
+<li><p>Log-return modeling</p></li>
+<li><p>Volatility models (GARCH)</p></li>
+<li><p>Weekly aggregation</p></li>
+<li><p>Regime and structural break analysis</p></li>
+</ul>
 </div>
 </div>
 
