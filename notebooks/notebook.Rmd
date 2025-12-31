@@ -1,0 +1,80 @@
+# Daily Bitcoin Time Series Analysis (2014–2025)
+
+by Hans Darmawan
+
+------------------------------------------------------------------------
+
+## 1. Setup & Libraries
+
+------------------------------------------------------------------------
+
+## 2. Load Daily Bitcoin Data
+
+### Validation
+
+------------------------------------------------------------------------
+
+## 3. Data Cleaning & Tsibble Conversion
+
+### Sanity Checks
+
+------------------------------------------------------------------------
+
+## 4. Exploratory Data Analysis (EDA)
+
+### 4.1 Full History Price
+
+------------------------------------------------------------------------
+
+### 4.2 Last 2 Years
+
+------------------------------------------------------------------------
+
+### 4.3 30-Day Rolling Mean
+
+------------------------------------------------------------------------
+
+### 4.4 30-Day Rolling Volatility
+
+------------------------------------------------------------------------
+
+## 5. Baseline Forecasting Models
+
+### 5.1 Train–Test Split
+
+------------------------------------------------------------------------
+
+### 5.2 Model Fitting
+
+------------------------------------------------------------------------
+
+### 5.3 Forecasting
+
+------------------------------------------------------------------------
+
+## 6. Model Evaluation
+
+### Summary Comparison
+
+------------------------------------------------------------------------
+
+## 7. Conclusion
+
+-   Dataset successfully modeled as **daily tsibble**
+
+-   Baseline models established:
+
+    -   Naive
+    -   Random Walk with Drift
+    -   ARIMA
+
+-   Evaluation uses **out-of-sample 14-day horizon**
+
+-   Ready for:
+
+    -   Log-return modeling
+    -   GARCH / ETS
+    -   Weekly aggregation
+    -   Regime analysis
+
+------------------------------------------------------------------------
