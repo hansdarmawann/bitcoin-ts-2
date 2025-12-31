@@ -2,6 +2,8 @@
 
 by Hans Darmawan
 
+Bitcoin price data pose a uniquely challenging time-series problem: they are **highly volatile, non-stationary, regime-driven, and structurally incomplete**, with missing calendar days and rapidly changing dynamics. Despite this complexity, many applied analyses jump directly to sophisticated models without first establishing strong, interpretable baselines or validating the temporal structure of the data. This project is interesting because it deliberately addresses that gap—treating Bitcoin as a *long-horizon financial time series* rather than a trading signal, enforcing explicit time indexing, and rigorously evaluating whether added model complexity truly improves short-term forecasts. By showing that simple benchmarks can rival or outperform more complex methods, the analysis challenges common assumptions in crypto modeling and provides a principled foundation for more advanced time-series research.
+
 ------------------------------------------------------------------------
 
 ## 1. Setup & Libraries
