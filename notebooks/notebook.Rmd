@@ -12,6 +12,7 @@ library(tsibble)
 library(lubridate)
 library(slider)
 library(fable)
+library(here)
 ```
 
 ------------------------------------------------------------------------
@@ -20,8 +21,8 @@ library(fable)
 
 ```{r}
 btc_raw <- read_csv(
-"data/btc_2014_2025.csv",
-show_col_types = FALSE
+  here::here("data", "btc_2014_2025.csv"),
+  show_col_types = FALSE
 )
 
 message("Rows loaded (daily): ", nrow(btc_raw))
