@@ -48,6 +48,20 @@ message("Rows loaded (daily): ", nrow(btc_raw))
 
 ```
 
+The dataset was successfully loaded, containing **4,121 daily observations** of Bitcoin prices.
+
+This row count indicates:
+
+-   A **long historical coverage**, spanning multiple market cycles (bull, bear, and consolidation phases)
+
+-   Sufficient data density for **time series modeling**, including rolling statistics and forecasting
+
+-   Adequate sample size for **out-of-sample evaluation** without sacrificing training depth
+
+At a daily frequency, 4,121 observations correspond to **over 11 years of data**, which is appropriate for capturing long-term trends, volatility clustering, and structural changes commonly observed in cryptocurrency markets.
+
+Overall, the data volume is **well-suited for robust exploratory analysis and baseline forecasting**, and provides a strong foundation for more advanced modeling extensions.
+
 ### 2.1. Validation
 
 Before proceeding with analysis, basic schema validation is performed.
@@ -93,6 +107,14 @@ btc_ts
 
 ```
 
+The raw Bitcoin dataset was successfully cleaned and converted into a **daily tsibble** with **4,121 observations and 6 variables**, indexed explicitly by date.
+
+Key confirmations from the output: - The time index (`date`) is correctly parsed as a `Date` class and ordered chronologically. - Price-related fields (`open`, `high`, `low`, `close`) and `volume` are stored as numeric (`<dbl>`), ensuring compatibility with statistical modeling. - The interval `[1D]` confirms a **regular daily frequency**, which is essential for rolling-window calculations and forecasting.
+
+The presence of OHLC and volume data indicates flexibility for future extensions beyond closing-price analysis, such as: - Volatility and range-based indicators - Candlestick-based features - Volume-informed regime analysis
+
+Overall, the tsibble structure validates that the dataset is **time-aware, clean, and analysis-ready**, forming a reliable foundation for exploratory analysis, rolling statistics, and baseline forecasting models.
+
 ### 3.1. Sanity Checks
 
 Sanity checks are performed to ensure time series integrity.
@@ -116,13 +138,45 @@ warning("⚠️ Missing values detected in 'close'")
 
 ```
 
+The sanity checks indicate that the time series **contains missing calendar days**, as gap detection returned `TRUE`.
+
+This result means:
+
+-   The dataset is indexed at a daily frequency, but **not every calendar day is present**
+
+-   One or more dates are missing in the sequence, likely due to:
+
+-   Exchange-specific data availability
+
+-   Early-market sparsity
+
+-   Data source limitations rather than true market closure (Bitcoin trades 24/7)
+
+Importantly:
+
+-   **No missing values were detected in the `close` price column**, confirming that all existing observations are numerically complete
+
+-   The issue is therefore **structural (missing dates)** rather than **data quality (missing prices)**
+
+Implications for analysis: - Rolling-window calculations (e.g., moving averages, volatility) may be affected if gaps are not handled explicitly - Forecasting models assuming a regular daily interval should account for these gaps, either by: - Explicitly filling missing dates, or - Accepting the irregularity if supported by the modeling framework
+
+Overall, the data remains usable and reliable, but the presence of gaps should be **acknowledged and addressed deliberately** in downstream time series modeling steps.
+
 ------------------------------------------------------------------------
 
 ## 4. Exploratory Data Analysis (EDA)
 
 Exploratory Data Analysis (EDA) provides an initial understanding of Bitcoin’s price dynamics over time.
 
-Visual inspection helps identify: - Long-term growth trends - Structural breaks - Periods of extreme volatility - Regime shifts commonly observed in cryptocurrency markets
+Visual inspection helps identify:
+
+-   Long-term growth trends
+
+-   Structural breaks
+
+-   Periods of extreme volatility
+
+-   Regime shifts commonly observed in cryptocurrency markets
 
 EDA is a crucial step before applying any statistical or forecasting models.
 
@@ -130,7 +184,13 @@ EDA is a crucial step before applying any statistical or forecasting models.
 
 This plot visualizes the entire daily Bitcoin price history from 2014 to 2025.
 
-It highlights: - The long-term upward trend - High volatility relative to traditional assets - Distinct bull and bear market cycles
+It highlights:
+
+-   The long-term upward trend
+
+-   High volatility relative to traditional assets
+
+-   Distinct bull and bear market cycles
 
 This global view provides context for subsequent focused analyses on shorter time horizons.
 
@@ -145,6 +205,26 @@ y = "Price"
 )
 
 ```
+
+The full-history price plot reveals Bitcoin’s **strong long-term upward trend**, accompanied by **extreme volatility and recurring boom–bust cycles**.
+
+Key observations from the visualization: - An extended **low-price accumulation phase** in the early years, followed by rapid exponential growth as adoption increased.
+
+-   Multiple **distinct bull and bear market cycles**, characterized by sharp price run-ups followed by deep corrections.
+
+-   Increasing **price amplitude over time**, indicating that both gains and drawdowns have grown larger in absolute terms as market capitalization expanded.
+
+-   Clear evidence of **structural breaks and regime shifts**, where price dynamics change markedly across different periods.
+
+Despite short-term turbulence, the overall trajectory shows persistent growth, suggesting that Bitcoin behaves more like a **high-volatility growth asset** than a stable financial instrument.
+
+This global view provides essential context for modeling decisions, highlighting the need for:
+
+-   Log-scale or return-based transformations
+
+-   Models robust to non-stationarity
+
+-   Caution when interpreting forecasts on raw price levels
 
 ------------------------------------------------------------------------
 
@@ -174,6 +254,20 @@ y = "Price"
 )
 
 ```
+
+The last two years of Bitcoin price data highlight **pronounced short-term dynamics**, marked by rapid trend changes and elevated volatility.
+
+Key observations from the visualization:
+
+-   A clear **transition from consolidation to strong upward momentum**, indicating periods of renewed bullish sentiment.
+
+-   Frequent and sharp **price swings within relatively short time spans**, reflecting heightened speculative activity and sensitivity to market news.
+
+-   The presence of **multiple short-lived trends**, where rallies are often followed by quick pullbacks rather than prolonged stable phases.
+
+-   Volatility remains **consistently high**, even during upward movements, suggesting that risk remains elevated despite overall price appreciation.
+
+This zoomed-in view emphasizes that, unlike the long-term trend, short-term Bitcoin price behavior is **highly unstable and regime-dependent**, reinforcing the importance of short forecasting horizons and robust risk-aware modeling approaches.
 
 ------------------------------------------------------------------------
 
@@ -210,6 +304,20 @@ y = "Price"
 
 ------------------------------------------------------------------------
 
+The 30-day rolling mean smooths short-term noise and highlights the **underlying medium-term trend** in Bitcoin prices.
+
+Key observations from the visualization:
+
+-   The rolling mean closely follows the long-term price trajectory while **filtering out daily volatility**, making trend direction more interpretable.
+
+-   Sustained **upward and downward phases** become clearer, especially during major bull and bear market cycles.
+
+-   Turning points in the rolling mean often **lag raw price movements**, reflecting the smoothing effect of the 30-day window.
+
+-   Periods where the price deviates strongly from the rolling mean correspond to **heightened volatility and speculative excess**.
+
+Overall, the 30-day rolling mean provides a clearer view of Bitcoin’s **medium-term momentum**, serving as a useful tool for trend identification and contextualizing short-term price fluctuations.
+
 ### 4.4. 30-Day Rolling Volatility
 
 This section computes a 30-day rolling standard deviation of Bitcoin prices as a proxy for market volatility.
@@ -239,6 +347,22 @@ y = "Volatility"
 )
 
 ```
+
+The 30-day rolling volatility plot highlights Bitcoin’s **highly unstable and clustered risk dynamics** over time.
+
+Key observations from the visualization:
+
+-   Volatility is **very low in the early years**, reflecting limited market participation and relatively stable price movements.
+
+-   As Bitcoin adoption grows, volatility increases sharply, with **large spikes coinciding with major bull and bear market phases**.
+
+-   Periods of elevated volatility tend to **cluster rather than occur in isolation**, a hallmark of financial time series behavior.
+
+-   Extreme volatility spikes are often associated with **market stress, rapid price corrections, or speculative blow-off tops**.
+
+-   In recent years, volatility remains **structurally higher** than in early periods, even during relatively calm price phases.
+
+Overall, this pattern confirms that Bitcoin exhibits **persistent volatility clustering and regime-dependent risk**, motivating the use of volatility-aware models and caution when interpreting point forecasts.
 
 ------------------------------------------------------------------------
 
