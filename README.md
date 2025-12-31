@@ -1,4 +1,5 @@
 # 📈 Daily Bitcoin Time Series Analysis (2014–2025)
+RPubs Link Here: https://rpubs.com/hansdarmawann/1384875
 
 **Author:** Hans Darmawan  
 **Language:** R  
@@ -215,10 +216,3 @@ Potential extensions include:
 
 This project is for **educational and research purposes only**.
 It does **not** constitute financial or investment advice.
-
----
-
-## 👤 Author
-
-**Hans Darmawan**
-Data Science • Time Series • Financial Analytics
