@@ -397,6 +397,18 @@ message("Test rows : ", nrow(btc_test))
 
 ```
 
+The dataset was split into **4,108 training observations** and **13 test observations**, following a time-aware train–test strategy.
+
+This split implies:
+
+-   The training set retains **nearly the full historical context**, allowing models to learn long-term trends, market cycles, and volatility regimes.
+
+-   The test set represents a **short and realistic forecasting horizon**, which is appropriate for evaluating near-term predictive performance in financial markets.
+
+-   Temporal ordering is strictly preserved, preventing **information leakage from future data** into the training process.
+
+Overall, this configuration balances **model learning depth** with **practical forecast evaluation**, aligning well with short-horizon forecasting use cases commonly found in cryptocurrency analysis.
+
 ------------------------------------------------------------------------
 
 ### 5.2. Model Fitting
@@ -420,6 +432,26 @@ arima = ARIMA(close)
 report(models)
 
 ```
+
+The model summary compares three baseline forecasting approaches fitted to the training data.
+
+Key observations from the output:
+
+-   The **Naive** and **Random Walk with Drift** models report identical variance estimates (`sigma2`) and do not provide likelihood-based statistics (log-likelihood, AIC, AICc, BIC), as these models are non-parametric baselines rather than fully specified statistical models.
+
+-   Both baseline models show `<NULL>` values for AR and MA roots, confirming that they do not model autocorrelation structure explicitly and rely solely on the last observed value (with or without drift).
+
+-   The **ARIMA** model reports a slightly lower estimated variance (`sigma2`) compared to the naive baselines, indicating a marginally better fit to historical price dynamics.
+
+-   The presence of valid **log-likelihood, AIC, AICc, and BIC** values for the ARIMA model allows formal model comparison and reflects its parametric nature.
+
+-   The ARIMA specification includes **MA roots but no AR roots**, suggesting that short-term shock effects dominate the fitted dependence structure rather than persistent autoregressive behavior.
+
+Overall, this output confirms that:
+
+-   Simple baseline models serve as useful reference points but lack statistical diagnostics.
+
+-   The ARIMA model captures additional structure in the data, albeit with only modest improvement, which is typical for highly volatile and non-stationary financial price series.
 
 ------------------------------------------------------------------------
 
@@ -445,6 +477,38 @@ y = "Price"
 
 ```
 
+Three baseline models were successfully fitted and compared: **Naive**, **Random Walk with Drift**, and **ARIMA**.
+
+Key observations from the model summary:
+
+-   The **Naive** and **Drift** models report identical residual variance (`sigma² ≈ 1,214,937`) and do not provide likelihood-based metrics (AIC, BIC), which is expected given their simplicity and non-parametric nature.
+
+-   The **ARIMA** model yields a slightly lower residual variance (`sigma² ≈ 1,213,359`), indicating a marginally better in-sample fit compared to the simpler baselines.
+
+-   Only the ARIMA model reports valid **log-likelihood and information criteria** (AIC, AICc, BIC), allowing formal statistical comparison and model selection.
+
+-   The presence of a valid MA root confirms that the ARIMA model captures short-term dependence structure in the data, while the absence of AR roots suggests limited autoregressive dynamics at the chosen differencing level.
+
+From the forecast visualization:
+
+-   All three models produce **very similar short-horizon forecasts**, reflecting the dominance of recent price information in near-term prediction.
+
+-   The **Naive** forecast remains flat, anchoring predictions at the last observed price.
+
+-   The **Drift** model introduces a slight directional movement, extrapolating recent average trends.
+
+-   The **ARIMA** forecast closely tracks the drift behavior but adds **wider and more realistic uncertainty intervals**, reflecting modeled residual structure.
+
+-   Prediction intervals widen rapidly, highlighting the **high uncertainty inherent in short-term Bitcoin price forecasting**.
+
+Overall, these results demonstrate that:
+
+-   Simple baseline models already capture most short-horizon predictive power.
+
+-   Increased model complexity (ARIMA) provides only modest gains in fit.
+
+-   These baselines establish a strong benchmark for evaluating more advanced models such as return-based ARIMA, GARCH, or regime-switching approaches.
+
 ------------------------------------------------------------------------
 
 ## 6. Model Evaluation
@@ -468,6 +532,38 @@ acc
 
 ```
 
+The model evaluation results compare baseline forecasts using out-of-sample test data, with one missing future observation handled as missing without invalidating the evaluation.
+
+Key points from the warning:
+
+-   One test observation at **2025-12-28** is missing and was treated as `NA`.
+
+-   The remaining test data is still sufficient for **comparative model evaluation**.
+
+-   This situation commonly occurs near dataset boundaries and does not bias relative model performance.
+
+Key observations from the accuracy metrics:
+
+-   The **Random Walk with Drift** model achieves the **lowest RMSE (1304.07)** and **lowest MAE (1195.58)**, indicating the strongest short-horizon predictive performance among the baselines.
+
+-   The **ARIMA** model performs moderately well but does **not outperform the drift model**, suggesting that additional autoregressive complexity does not translate into better short-term accuracy on raw price levels.
+
+-   The **Naive** model shows the **highest RMSE and MAE**, confirming it as a useful but weak baseline.
+
+-   All models exhibit **positive Mean Error (ME)**, indicating a tendency to **underestimate actual prices** during the test period.
+
+-   MAPE values are relatively close across models, reflecting similar proportional error behavior in a highly volatile price regime.
+
+-   `MASE` and `RMSSE` are reported as `NaN` due to scaling limitations with the short test window, which is expected and not indicative of model failure.
+
+Overall interpretation:
+
+-   The **Random Walk with Drift** model serves as the **strongest baseline**, setting a practical benchmark for future models.
+
+-   The results reinforce a common finding in financial time series: **simple models with drift often outperform more complex alternatives** over short forecasting horizons.
+
+-   These metrics provide a solid reference point for evaluating more advanced approaches such as log-return models, volatility-aware methods, or regime-switching frameworks
+
 ### 6.1. Summary Comparison
 
 Model performance metrics are summarized and ranked by RMSE.
@@ -490,6 +586,24 @@ arrange(RMSE)
 acc_summary
 
 ```
+
+The evaluation results compare the out-of-sample forecasting performance of the three baseline models over the test horizon.
+
+Key observations from the results:
+
+-   The **Random Walk with Drift** model achieves the **best overall performance**, with the lowest MAE, RMSE, and MAPE among the three models.
+
+-   The **ARIMA** model performs moderately well but does **not outperform the simpler drift model**, indicating that additional model complexity does not translate into better short-term accuracy in this case.
+
+-   The **Naive** model shows the weakest performance, serving as a useful lower-bound benchmark for forecast accuracy.
+
+Metric-based interpretation:
+
+-   **MAE** confirms that the drift model produces the smallest average absolute forecast error.
+-   **RMSE** reinforces this ranking, showing that the drift model also minimizes large forecast deviations.
+-   **MAPE** values are relatively close across models, but still favor the drift specification.
+
+Overall, these results suggest that for short-horizon Bitcoin price forecasting, **simple baseline models—particularly Random Walk with Drift—are highly competitive**, and more complex models must demonstrate clear gains to justify their added complexity.
 
 ------------------------------------------------------------------------
 
