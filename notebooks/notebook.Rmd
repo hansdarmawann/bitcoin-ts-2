@@ -7,7 +7,11 @@ by Hans Darmawan
 ## 1. Setup & Libraries
 
 ```{r}
-
+library(tidyverse)
+library(tsibble)
+library(lubridate)
+library(slider)
+library(fable)
 ```
 
 ------------------------------------------------------------------------
@@ -15,12 +19,27 @@ by Hans Darmawan
 ## 2. Load Daily Bitcoin Data
 
 ```{r}
+btc_raw <- read_csv(
+"data/btc_2014_2025.csv",
+show_col_types = FALSE
+)
+
+message("Rows loaded (daily): ", nrow(btc_raw))
 
 ```
 
 ### Validation
 
 ```{r}
+required_cols <- c("date", "close")
+
+missing_cols <- setdiff(required_cols, names(btc_raw))
+if (length(missing_cols) > 0) {
+stop(
+"Missing required columns: ",
+paste(missing_cols, collapse = ", ")
+)
+}
 
 ```
 
@@ -29,12 +48,31 @@ by Hans Darmawan
 ## 3. Data Cleaning & Tsibble Conversion
 
 ```{r}
+btc_ts <- btc_raw %>%
+mutate(
+date = as.Date(date),
+close = as.numeric(close)
+) %>%
+arrange(date) %>%
+as_tsibble(index = date)
+
+btc_ts
 
 ```
 
 ### Sanity Checks
 
 ```{r}
+gaps <- has_gaps(btc_ts)
+
+if (nrow(gaps) > 0) {
+warning("⚠️ Time series has missing DAYS (gaps detected)")
+print(gaps)
+}
+
+if (any(is.na(btc_ts$close))) {
+warning("⚠️ Missing values detected in 'close'")
+}
 
 ```
 
@@ -45,6 +83,14 @@ by Hans Darmawan
 ### 4.1 Full History Price
 
 ```{r}
+ggplot(btc_ts, aes(date, close)) +
+geom_line(alpha = 0.6) +
+theme_minimal() +
+labs(
+title = "Bitcoin Daily Closing Price (Full History)",
+x = "Date",
+y = "Price"
+)
 
 ```
 
@@ -53,6 +99,17 @@ by Hans Darmawan
 ### 4.2 Last 2 Years
 
 ```{r}
+btc_recent <- btc_ts %>%
+filter(date >= max(date) - years(2))
+
+ggplot(btc_recent, aes(date, close)) +
+geom_line(color = "steelblue") +
+theme_minimal() +
+labs(
+title = "Bitcoin Daily Closing Price (Last 2 Years)",
+x = "Date",
+y = "Price"
+)
 
 ```
 
@@ -61,6 +118,25 @@ by Hans Darmawan
 ### 4.3 30-Day Rolling Mean
 
 ```{r}
+btc_roll <- btc_ts %>%
+mutate(
+close_ma_30 = slide_dbl(
+close,
+mean,
+.before = 29,
+.complete = TRUE
+)
+)
+
+ggplot(btc_roll, aes(date)) +
+geom_line(aes(y = close), alpha = 0.4) +
+geom_line(aes(y = close_ma_30), color = "red", linewidth = 0.8) +
+theme_minimal() +
+labs(
+title = "Daily Price with 30-Day Rolling Mean",
+x = "Date",
+y = "Price"
+)
 
 ```
 
@@ -69,6 +145,24 @@ by Hans Darmawan
 ### 4.4 30-Day Rolling Volatility
 
 ```{r}
+btc_vol <- btc_ts %>%
+mutate(
+vol_30 = slide_dbl(
+close,
+sd,
+.before = 29,
+.complete = TRUE
+)
+)
+
+ggplot(btc_vol, aes(date, vol_30)) +
+geom_line(color = "darkorange") +
+theme_minimal() +
+labs(
+title = "30-Day Rolling Volatility (Std Dev)",
+x = "Date",
+y = "Volatility"
+)
 
 ```
 
@@ -79,6 +173,16 @@ by Hans Darmawan
 ### 5.1 Train–Test Split
 
 ```{r}
+horizon <- 14
+
+btc_train <- btc_ts %>%
+filter(date <= max(date) - days(horizon))
+
+btc_test <- btc_ts %>%
+filter(date > max(date) - days(horizon))
+
+message("Train rows: ", nrow(btc_train))
+message("Test rows : ", nrow(btc_test))
 
 ```
 
@@ -87,6 +191,14 @@ by Hans Darmawan
 ### 5.2 Model Fitting
 
 ```{r}
+models <- btc_train %>%
+model(
+naive = NAIVE(close),
+drift = RW(close ~ drift()),
+arima = ARIMA(close)
+)
+
+report(models)
 
 ```
 
@@ -95,6 +207,16 @@ by Hans Darmawan
 ### 5.3 Forecasting
 
 ```{r}
+fc <- models %>%
+forecast(h = horizon)
+
+autoplot(fc, btc_ts) +
+theme_minimal() +
+labs(
+title = "Daily Bitcoin Forecast (Baseline Models)",
+x = "Date",
+y = "Price"
+)
 
 ```
 
@@ -103,12 +225,20 @@ by Hans Darmawan
 ## 6. Model Evaluation
 
 ```{r}
+acc <- accuracy(fc, btc_test)
+
+acc
 
 ```
 
 ### Summary Comparison
 
 ```{r}
+acc_summary <- acc %>%
+select(.model, MAE, RMSE, MAPE) %>%
+arrange(RMSE)
+
+acc_summary
 
 ```
 
