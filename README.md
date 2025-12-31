@@ -37,22 +37,37 @@ This work is intended as a **modeling and analytical foundation**, not as a trad
 bitcoin-ts-2/
 │
 ├── data/
-│   └── btc_2014_2025.csv
-│
-├── notebooks/
-│   ├── notebook.Rmd
-│   └── notebook.pdf
+│   ├── raw/
+│   │   └── btc_2014_2025.csv
+│   │
+│   └── processed/
+│       └── btc_daily_tsibble.rds
 │
 ├── scripts/
 │   ├── 01_load_data.R
-│   ├── 02_eda.R
-│   ├── 03_models.R
-│   └── 04_evaluation.R
+│   ├── 02_validate_tsibble.R
+│   ├── 03_eda_trends_volatility.R
+│   ├── 04_baseline_models.R
+│   ├── 05_evaluation.R
+│
+├── notebooks/
+│   ├── 01_exploration.Rmd
+│   ├── 02_modeling.Rmd
+│   └── 03_results.Rmd
+│
+├── reports/
+│   ├── figures/
+│   │   ├── price_full.png
+│   │   ├── rolling_mean_30d.png
+│   │   └── rolling_vol_30d.png
+│   │
+│   └── bitcoin_daily_report.html
 │
 ├── renv/
 ├── renv.lock
-├── bitcoin-ts-2.Rproj
+│
 ├── README.md
+├── bitcoin-ts-2.Rproj
 └── .gitignore
 ````
 
