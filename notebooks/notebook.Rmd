@@ -1,7 +1,3 @@
----
----
----
-
 # Daily Bitcoin Time Series Analysis (2014–2025)
 
 by Hans Darmawan
@@ -158,11 +154,11 @@ This section zooms into the most recent two years of Bitcoin price data.
 
 Focusing on recent history allows:
 
--   \- Better inspection of current market behavior
+-   Better inspection of current market behavior
 
--   \- Identification of short-term trends and volatility patterns
+-   Identification of short-term trends and volatility patterns
 
--   \- Alignment with practical forecasting horizons used in trading and risk analysis
+-   Alignment with practical forecasting horizons used in trading and risk analysis
 
 ```{r}
 btc_recent <- btc_ts %>%
